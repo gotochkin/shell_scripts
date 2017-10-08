@@ -1,8 +1,8 @@
 #!/bin/bash
-# Created by: Gleb Otochkin - otochkin@pythian.com 
+# Created by: Gleb Otochkin - gleb.otochkin@gmail.com 
 # Version 1.01 28-AUG-2017
 #
-# Script to refresh QA4 database using backup only located on a shared FS
+# Script to refresh database using backup located on a shared FS or copied from a source database
 # 
 ##################################
 SCRIPT_NAME=`basename $0`
