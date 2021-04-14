@@ -16,7 +16,7 @@
 ###########################################################################
 #  Script to clean database and host names in the AWR miner output 
 #  Works with multiple files in the provided directory. 
-#  All files have to have ".out" extension
+#  All files have to have ".out" extension 
 #  Created and tested on macOS 
 #  Please take a backup copy of files 
 
