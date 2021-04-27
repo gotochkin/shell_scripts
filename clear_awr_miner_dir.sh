@@ -19,6 +19,9 @@
 #  All files have to have ".out" extension 
 #  Created and tested on macOS 
 #  Please take a backup copy of files 
+#
+#   MODIFIED   (yyyy/mm/dd)
+#   Gleb Otochkin   2021/04/24 - added support for Solaris, Linux and Mac
 
 usage() {
 cat<<EOF
@@ -38,14 +41,14 @@ if [[ $# -lt 1 ]] ; then
     exit 1
 fi
 if [[ $# -lt 2 ]] ; then
-    db_new_name="ORADB"
+    db_new_name_tpl="ORADB"
 else 
-    db_new_name=$2
+    db_new_name_tpl=$2
 fi
 if [[ $# -lt 3 ]] ; then
-    hosts_new="hostname"
+    hosts_new_tpl="hostname"
 else
-    hosts_new=$3
+    hosts_new_tpl=$3
 fi
 if [[ $# -gt 3 ]] ; then
     echo "Wrong number of arguments!"
@@ -57,14 +60,46 @@ i=1
 for file in "$1"/*.out
 do
     db_name=`grep DB_NAME $file | awk '{print $2}'`
-    hosts=`grep HOSTS $file | awk '{print $2}'`
-    db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
-
-    echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
-    sed -i .bak "s/${db_name}/${db_new_name}${i}/g"  "$file"
-    sed -i .bak "s/${db_name_lowcase}/${db_new_name_lowcase}${i}/g"  "$file"
-    sed -i .bak "s/${hosts}/${hosts_new}${i}/g"  "$file"
-    rm "$file".bak
+    hosts_nxt=`grep HOSTS $file | awk '{print $2}'`
+    if [[ $hosts_nxt == $hosts ]] ; then
+        hosts=$hosts
+    else
+        hosts_new=$hosts_new_tpl$i
+        hosts=$hosts_nxt
+    fi
+    db_new_name=$db_new_name_tpl$i
+    PLATFORM=`uname`
+    case $PLATFORM in
+    Darwin)
+            db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
+            db_new_name_lowcase=`echo $db_new_name | awk '{print tolower($0)}'`
+            echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+            sed -i .bak "s/${db_name}/${db_new_name}/g"  "$file"
+            sed -i .bak "s/${db_name_lowcase}/${db_new_name_lowcase}/g"  "$file"
+            sed -i .bak "s/${hosts}/${hosts_new}/g"  "$file"
+            rm "$file".bak
+            ;;
+    SunOS)
+            db_name_lowcase=`echo $db_name | gawk '{print tolower($0)}'`
+            db_new_name_lowcase=`echo $db_new_name | gawk '{print tolower($0)}'`
+            echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+            sed "s/${db_name}/${db_new_name}/g"  "$file" > "$file".bak && cat "$file".bak > "$file"
+            sed "s/${db_name_lowcase}/${db_new_name_lowcase}/g" "$file" > "$file".bak && cat "$file".bak > "$file"
+            sed "s/${hosts}/${hosts_new}/g" "$file" > "$file".bak && cat "$file".bak > "$file"
+            rm "$file".bak
+            ;;
+    Linux)
+            db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
+            db_new_name_lowcase=`echo $db_new_name | awk '{print tolower($0)}'`
+            echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+            sed -i "s/${db_name}/${db_new_name}/g"  "$file"
+            sed -i "s/${db_name_lowcase}/${db_new_name_lowcase}/g"  "$file"
+            sed -i "s/${hosts}/${hosts_new}/g"  "$file"
+            ;;
+    *)
+            echo "Unknown OS!"
+            ;;
+    esac
     let i++
 done
 

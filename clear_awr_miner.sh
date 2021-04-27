@@ -17,6 +17,9 @@
 #  Script to clean database and host names in the AWR miner output
 #  Created and tested on macOS 
 #  Please take a backup copy of files 
+#
+#   MODIFIED   (yyyy/mm/dd)
+#   Gleb Otochkin   2021/04/24 - added support for Solaris, Linux and Mac
 
 usage() {
 cat<<EOF
@@ -53,12 +56,38 @@ fi
 
 db_name=`grep DB_NAME $1 | awk '{print $2}'`
 hosts=`grep HOSTS $1 | awk '{print $2}'`
-db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
-db_new_name_lowcase=`echo $db_new_name | awk '{print tolower($0)}'`
-echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
-sed -i .bak "s/${db_name}/${db_new_name}/g"  "$1"
-sed -i .bak "s/${db_name_lowcase}/${db_new_name_lowcase}/g"  "$1"
-sed -i .bak "s/${hosts}/${hosts_new}/g"  "$1"
-rm "$1".bak
+PLATFORM=`uname`
+case $PLATFORM in
+Darwin)
+        db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
+        db_new_name_lowcase=`echo $db_new_name | awk '{print tolower($0)}'`
+        echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+        sed -i .bak "s/${db_name}/${db_new_name}/g"  "$1"
+        sed -i .bak "s/${db_name_lowcase}/${db_new_name_lowcase}/g"  "$1"
+        sed -i .bak "s/${hosts}/${hosts_new}/g"  "$1"
+        rm "$1".bak
+        ;;
+SunOS)
+        db_name_lowcase=`echo $db_name | gawk '{print tolower($0)}'`
+        db_new_name_lowcase=`echo $db_new_name | gawk '{print tolower($0)}'`
+        echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+        sed "s/${db_name}/${db_new_name}/g"  "$1" > "$1".bak && cat "$1".bak > "$1"
+        sed "s/${db_name_lowcase}/${db_new_name_lowcase}/g" "$1" > "$1".bak && cat "$1".bak > "$1"
+        sed "s/${hosts}/${hosts_new}/g" "$1" > "$1".bak && cat "$1".bak > "$1"
+        rm "$1".bak
+        ;;
+Linux)
+        db_name_lowcase=`echo $db_name | awk '{print tolower($0)}'`
+        db_new_name_lowcase=`echo $db_new_name | awk '{print tolower($0)}'`
+        echo $db_name $hosts $db_name_lowcase $db_new_name $db_new_name_lowcase
+        sed -i "s/${db_name}/${db_new_name}/g"  "$1"
+        sed -i "s/${db_name_lowcase}/${db_new_name_lowcase}/g"  "$1"
+        sed -i "s/${hosts}/${hosts_new}/g"  "$1"
+        ;;
+*)
+        echo "Unknown OS!"
+        ;;
+esac
+
 
 
